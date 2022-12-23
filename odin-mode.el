@@ -19,11 +19,6 @@
   (unload-feature 'odin-mode)
   (eval-buffer))
 
-(defconst odin--font-lock-comment
-  (list '("\\(//.*\\)" . font-lock-comment-face)
-	'("\\(\\/\\*\\(.\\|\n\\)*\\*\\/\\)" . font-lock-comment-face))
-  "Highlighting expressions for Odin comments")
-
 (defconst odin--font-lock-directives
   (list '("#[a-zA-Z_]*" . font-lock-preprocessor-face))
   "Highlighting expressions for Odin directives")
@@ -51,8 +46,7 @@
   "Highlighting expressions for Odin types")
 
 (defconst odin-font-lock-keywords
-  (append odin--font-lock-comment
-	  odin--font-lock-directives
+  (append odin--font-lock-directives
 	  odin--font-lock-keywords
           odin--font-lock-functions
           odin--font-lock-types-builtin)
@@ -60,6 +54,10 @@
 
 (defvar odin-mode-syntax-table
   (let ((st (make-syntax-table)))
+    (modify-syntax-entry ?_ "w"      st) ;; underscore is part of a word
+    (modify-syntax-entry ?/ ". 124b" st) ;; comments start with 1-2 "/" and might end with one
+    (modify-syntax-entry ?* ". 23"   st) ;; comments have "*" as second char on start and first on end
+    (modify-syntax-entry ?\n "> b"   st) ;; newline can end a comment
     st)
   "Syntax table for odin-mode")
 
