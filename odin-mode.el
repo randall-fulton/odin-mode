@@ -20,7 +20,8 @@
   (eval-buffer))
 
 (defconst odin--font-lock-comment
-  (list '("\\(//.*\\)" . font-lock-comment-face))
+  (list '("\\(//.*\\)" . font-lock-comment-face)
+	'("\\(\\/\\*\\(.\\|\n\\)*\\*\\/\\)" . font-lock-comment-face))
   "Highlighting expressions for Odin comments")
 
 (defconst odin--font-lock-directives
