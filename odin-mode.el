@@ -1,15 +1,15 @@
 (defvar odin-mode-hook nil)
 
-(defvar odin-mode-map
-  (let ((map (make-keymap)))
-    (define-key map "\C-j" 'newline-and-indent)
-    map)
-  "Keymap for Odin major mode")
+(defun odin-align-const (start end)
+  "Align blocks of const declarations in Odin"
+  (interactive "r")
+  (replace-regexp-in-region "[\s\t]+" " " start end)
+  (align-regexp start end "\\(\\s-*\\)::" 1 1))
 
 (defun odin-mode--reload ()
   "Helper to reload Odin major mode for quicker development iteration."
   (interactive)
-  (unload-feature 'odin-mode)
+  (unload-feature 'odin-mode t)
   (eval-buffer))
 
 (defconst odin--odin-keywords
@@ -91,7 +91,7 @@
 		(end-of-function-call "^[\s\t]*)"))
 	(if (bobp)
 		(indent-line-to 0)
-      (let ((not-indented t)
+	  (let ((not-indented t)
 			cur-indent)
 		(cond ((looking-at "^[\s\t]*}") ;; closing a block
 			   (progn
@@ -159,6 +159,12 @@
 		(if cur-indent
 			(indent-line-to cur-indent)
 		  (indent-line-to 0))))))
+
+(defvar odin-mode-map
+  (let ((map (make-keymap)))
+	(define-key map "\C-c a" 'odin-align-const)
+    map)
+  "Keymap for Odin major mode")
 
 (defun odin-mode ()
   "Major mode for editing Odin files"
