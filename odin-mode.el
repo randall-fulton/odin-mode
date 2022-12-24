@@ -86,32 +86,79 @@
   "Indent current line as Odin code"
   (interactive)
   (beginning-of-line)
-  (if (bobp)
-      (indent-line-to 0)
-    (let ((not-indented t)
-		  cur-indent)
-	  (cond ((looking-at "^[\s\t]*}") ;; closing a block
-			 (progn
-			   (save-excursion
-				 (forward-line -1)
-				 (setq cur-indent (- (current-indentation) tab-width)))
-			   (if (< cur-indent 0)
-				   (setq cur-indent 0))))
-			(t (save-excursion ;; everything else
-				 (while not-indented
+  (let ((start-of-multiline-block "^.*{\s*\\(?://.*\\)?$")
+		(end-of-multiline-block "^[\s\t]*}")
+		(end-of-function-call "^[\s\t]*)"))
+	(if (bobp)
+		(indent-line-to 0)
+      (let ((not-indented t)
+			cur-indent)
+		(cond ((looking-at "^[\s\t]*}") ;; closing a block
+			   (progn
+				 (save-excursion
 				   (forward-line -1)
-				   (cond ((looking-at "^.*{$") ;; start of current block
-						  (progn
-							(setq cur-indent
-								  (+ (current-indentation) tab-width))
-							(setq not-indented nil)))
-						 ((looking-at "^[\s\t]*}") ;; close of previous block
-						  (progn
-							(setq cur-indent (current-indentation))
-							(setq not-indented nil))))))))
-	  (if cur-indent
-		  (indent-line-to cur-indent)
-		(indent-line-to 0)))))
+				   (setq cur-indent (- (current-indentation) tab-width)))
+				 (if (< cur-indent 0)
+					 (setq cur-indent 0))))
+			  ((looking-at "^[\s\t]*case.*:.*") ;; open case block
+			   (progn
+				 (let ((inner-level 0))
+				   (save-excursion
+					 (while not-indented
+					   (forward-line -1)
+					   (cond ((looking-at ".*switch.*{")
+							  (if (= inner-level 0)
+								  (progn
+									(setq cur-indent (current-indentation))
+									(setq not-indented nil))
+								(setq inner-level (- inner-level 1))))
+							 ((looking-at start-of-multiline-block)
+							  (setq inner-level (- inner-level 1)))
+							 ((looking-at end-of-multiline-block)
+							  ;; TODO: this doesn't allow anon blocks
+							  (setq inner-level (+ inner-level 1)))))))))
+			  ((looking-at end-of-function-call)
+			   (progn
+				 (save-excursion
+				   (while not-indented
+					 (forward-line -1)
+					 (if (looking-at ".*($") ;; beginning of function call
+						 (progn
+						   (setq cur-indent (current-indentation))
+						   (setq not-indented nil)))))))
+			  (t (save-excursion ;; everything else
+				   (while not-indented
+					 (forward-line -1)
+					 (cond ((looking-at start-of-multiline-block)
+							(progn
+							  (setq cur-indent
+									(+ (current-indentation) tab-width))
+							  (setq not-indented nil)))
+						   ((looking-at end-of-multiline-block)
+							(progn
+							  (setq cur-indent (current-indentation))
+							  (setq not-indented nil)))
+						   ((looking-at end-of-function-call)
+							(progn
+							  (setq cur-indent (current-indentation))
+							  (setq not-indented nil)))
+						   ((looking-at ".*($") ;; beginning of function call
+							(progn
+							  (setq cur-indent
+									(+ (current-indentation) tab-width))
+							  (setq not-indented nil)))
+						   ((looking-at "^[\s\t]*case.*:$") ;; case block
+							(progn
+							  (setq cur-indent
+									(+ (current-indentation) tab-width))
+							  (setq not-indented nil)))
+						   ((bobp)
+							(progn
+							  (setq cur-indent 0)
+							  (setq not-indented nil))))))))
+		(if cur-indent
+			(indent-line-to cur-indent)
+		  (indent-line-to 0))))))
 
 (defun odin-mode ()
   "Major mode for editing Odin files"
