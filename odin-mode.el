@@ -90,24 +90,28 @@
       (indent-line-to 0)
     (let ((not-indented t)
 		  cur-indent)
-      (if (looking-at "^[\s\t]*}") ;; closing a block
-		  (progn
-			(save-excursion
-			  (forward-line -1)
-			  (setq cur-indent (- (current-indentation) tab-width)))
-			(if (< cur-indent 0)
-				(setq cur-indent 0)))
-		(save-excursion
-		  (while not-indented
-			(forward-line -1)
-			(if (looking-at "^.*{$")
-				(progn
-				  (setq cur-indent
-						(+ (current-indentation) tab-width))
-				  (setq not-indented nil)))))
-		(if cur-indent
-			(indent-line-to cur-indent)
-		  (indent-line-to 0))))))
+	  (cond ((looking-at "^[\s\t]*}") ;; closing a block
+			 (progn
+			   (save-excursion
+				 (forward-line -1)
+				 (setq cur-indent (- (current-indentation) tab-width)))
+			   (if (< cur-indent 0)
+				   (setq cur-indent 0))))
+			(t (save-excursion ;; everything else
+				 (while not-indented
+				   (forward-line -1)
+				   (cond ((looking-at "^.*{$") ;; start of current block
+						  (progn
+							(setq cur-indent
+								  (+ (current-indentation) tab-width))
+							(setq not-indented nil)))
+						 ((looking-at "^[\s\t]*}") ;; close of previous block
+						  (progn
+							(setq cur-indent (current-indentation))
+							(setq not-indented nil))))))))
+	  (if cur-indent
+		  (indent-line-to cur-indent)
+		(indent-line-to 0)))))
 
 (defun odin-mode ()
   "Major mode for editing Odin files"
