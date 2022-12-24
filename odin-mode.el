@@ -82,6 +82,33 @@
     st)
   "Syntax table for odin-mode")
 
+(defun odin-indent-line ()
+  "Indent current line as Odin code"
+  (interactive)
+  (beginning-of-line)
+  (if (bobp)
+      (indent-line-to 0)
+    (let ((not-indented t)
+		  cur-indent)
+      (if (looking-at "^[\s\t]*}") ;; closing a block
+		  (progn
+			(save-excursion
+			  (forward-line -1)
+			  (setq cur-indent (- (current-indentation) tab-width)))
+			(if (< cur-indent 0)
+				(setq cur-indent 0)))
+		(save-excursion
+		  (while not-indented
+			(forward-line -1)
+			(if (looking-at "^.*{$")
+				(progn
+				  (setq cur-indent
+						(+ (current-indentation) tab-width))
+				  (setq not-indented nil)))))
+		(if cur-indent
+			(indent-line-to cur-indent)
+		  (indent-line-to 0))))))
+
 (defun odin-mode ()
   "Major mode for editing Odin files"
   (interactive)
@@ -89,7 +116,7 @@
   (set-syntax-table odin-mode-syntax-table)
   (use-local-map odin-mode-map)
   (set (make-local-variable 'font-lock-defaults) '(odin-font-lock-keywords))
-  ;; (set (make-local-variable 'indent-line-function) 'odin-indent-line)
+  (set (make-local-variable 'indent-line-function) 'odin-indent-line)
   (setq major-mode 'odin-mode)
   (setq mode-name "Odin")
   (run-hooks 'odin-mode-hook))
