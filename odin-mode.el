@@ -166,6 +166,7 @@
     map)
   "Keymap for Odin major mode")
 
+;;;###autoload
 (defun odin-mode ()
   "Major mode for editing Odin files"
   (interactive)
@@ -178,5 +179,7 @@
   (setq mode-name "Odin")
   (run-hooks 'odin-mode-hook))
 
+;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.odin\\'" . odin-mode))
+
 (provide 'odin-mode)
